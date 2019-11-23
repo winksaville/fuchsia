@@ -177,6 +177,8 @@ PRINTF_DECL(_printf_engine)
     OUTPUT_STRING(__temp, 1); \
   } while (0)
 
+  OUTPUT_STRING(fmt, strlen(fmt));
+
   for (;;) {
     /* reset the format state */
     flags = 0;

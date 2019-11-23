@@ -53,7 +53,7 @@ static size_t get_log_line(char* out) {
         continue;
       }
       rec->data[rec->datalen] = 0;
-      snprintf(out, MAX_LOG_LINE, "[%05d.%03d] %05" PRIu64 ".%05" PRIu64 "> %s\n",
+      snprintf(out, MAX_LOG_LINE, "sav1 [%05d.%03d] %05" PRIu64 ".%05" PRIu64 "> %s\n",
                static_cast<int>(rec->timestamp / 1000000000ULL),
                static_cast<int>((rec->timestamp / 1000000ULL) % 1000ULL), rec->pid, rec->tid,
                rec->data);

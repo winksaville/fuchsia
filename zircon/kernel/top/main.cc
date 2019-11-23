@@ -51,6 +51,9 @@ void lk_main() {
   // deal with any static constructors
   call_constructors();
 
+  // Earliest dprintf that worked
+  dprintf(INFO, "lk_main\n");
+
   // early arch stuff
   lk_primary_cpu_init_level(LK_INIT_LEVEL_EARLIEST, LK_INIT_LEVEL_ARCH_EARLY - 1);
   arch_early_init();
@@ -61,59 +64,64 @@ void lk_main() {
 
   // do any super early target initialization
   lk_primary_cpu_init_level(LK_INIT_LEVEL_PLATFORM_EARLY, LK_INIT_LEVEL_TARGET_EARLY - 1);
+
   target_early_init();
+
+  dprintf(INFO, "wink 1\n");
 
   dprintf(INFO, "\nwelcome to Zircon\n\n");
 
   dprintf(INFO, "KASLR: .text section at %p\n", __code_start);
 
   lk_primary_cpu_init_level(LK_INIT_LEVEL_TARGET_EARLY, LK_INIT_LEVEL_VM_PREHEAP - 1);
-  dprintf(SPEW, "initializing vm pre-heap\n");
+  dprintf(INFO, "** initializing vm pre-heap\n");
   vm_init_preheap();
 
   // bring up the kernel heap
   lk_primary_cpu_init_level(LK_INIT_LEVEL_VM_PREHEAP, LK_INIT_LEVEL_HEAP - 1);
-  dprintf(SPEW, "initializing heap\n");
+  dprintf(INFO, "** initializing heap\n");
   heap_init();
 
   lk_primary_cpu_init_level(LK_INIT_LEVEL_HEAP, LK_INIT_LEVEL_VM - 1);
-  dprintf(SPEW, "initializing vm\n");
+  dprintf(INFO, "** initializing vm\n");
   vm_init();
 
   // initialize the kernel
   lk_primary_cpu_init_level(LK_INIT_LEVEL_VM, LK_INIT_LEVEL_KERNEL - 1);
-  dprintf(SPEW, "initializing kernel\n");
+  dprintf(INFO, "** initializing kernel\n");
   kernel_init();
 
   lk_primary_cpu_init_level(LK_INIT_LEVEL_KERNEL, LK_INIT_LEVEL_THREADING - 1);
 
   // create a thread to complete system initialization
-  dprintf(SPEW, "creating bootstrap completion thread\n");
+  dprintf(INFO, "** creating bootstrap completion thread\n");
   thread_t* t = thread_create("bootstrap2", &bootstrap2, NULL, DEFAULT_PRIORITY);
   thread_detach(t);
   thread_resume(t);
 
   // become the idle thread and enable interrupts to start the scheduler
+  dprintf(INFO, "** become idle\n");
   thread_become_idle();
+  dprintf(INFO, "** lk_main:-\n");
 }
 
 static int bootstrap2(void*) {
-  dprintf(SPEW, "top of bootstrap2()\n");
+  dprintf(INFO, "** top of bootstrap2()\n");
 
   lk_primary_cpu_init_level(LK_INIT_LEVEL_THREADING, LK_INIT_LEVEL_ARCH - 1);
   arch_init();
 
   // initialize the rest of the platform
-  dprintf(SPEW, "initializing platform\n");
+  dprintf(INFO, "** initializing platform\n");
   lk_primary_cpu_init_level(LK_INIT_LEVEL_ARCH, LK_INIT_LEVEL_PLATFORM - 1);
   platform_init();
 
   // initialize the target
-  dprintf(SPEW, "initializing target\n");
+  dprintf(INFO, "** initializing target\n");
   lk_primary_cpu_init_level(LK_INIT_LEVEL_PLATFORM, LK_INIT_LEVEL_TARGET - 1);
   target_init();
 
-  dprintf(SPEW, "moving to last init level\n");
+  dprintf(INFO, "** moving to last init level\n");
   lk_primary_cpu_init_level(LK_INIT_LEVEL_TARGET, LK_INIT_LEVEL_LAST);
 
   return 0;
@@ -121,6 +129,7 @@ static int bootstrap2(void*) {
 
 void lk_secondary_cpu_entry() {
   uint cpu = arch_curr_cpu_num();
+  dprintf(INFO, "** lk_init_secondary_entry:+ cpu=%d\n", cpu);
 
   if (cpu > secondary_idle_thread_count) {
     dprintf(CRITICAL,
@@ -132,11 +141,13 @@ void lk_secondary_cpu_entry() {
   // secondary cpu initialize from threading level up. 0 to threading was handled in arch
   lk_init_level(LK_INIT_FLAG_SECONDARY_CPUS, LK_INIT_LEVEL_THREADING, LK_INIT_LEVEL_LAST);
 
-  dprintf(SPEW, "entering scheduler on cpu %u\n", cpu);
+  dprintf(INFO, "entering scheduler on cpu %u\n", cpu);
   thread_secondary_cpu_entry();
+  dprintf(INFO, "lk_init_secondary_entry:- cpu=%d\n", cpu);
 }
 
 void lk_init_secondary_cpus(uint secondary_cpu_count) {
+  dprintf(INFO, "** lk_init_secondary_cput:+ secondary_cpu_count=%d\n", secondary_cpu_count);
   if (secondary_cpu_count >= SMP_MAX_CPUS) {
     dprintf(CRITICAL, "Invalid secondary_cpu_count %u, SMP_MAX_CPUS %d\n", secondary_cpu_count,
             SMP_MAX_CPUS);
@@ -151,4 +162,5 @@ void lk_init_secondary_cpus(uint secondary_cpu_count) {
     }
   }
   secondary_idle_thread_count = secondary_cpu_count;
+  dprintf(INFO, "** lk_init_secondary_cput:- secondary_cpu_count=%d\n", secondary_cpu_count);
 }

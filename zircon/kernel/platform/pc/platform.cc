@@ -731,6 +731,8 @@ void platform_halt_secondary_cpus(void) {
 }
 
 void platform_early_init(void) {
+  printf("platform_early_init:\n");
+
   /* call before bootloader data is populated, since we want to
    * let the bootloader data override this */
   pc_init_debug_default_early();
@@ -767,6 +769,8 @@ void platform_early_init(void) {
 }
 
 static void platform_init_smp(void) {
+  printf("platform_init_smp\n");
+
   fbl::AllocChecker ac;
   fbl::Vector<uint32_t> apic_ids;
 
@@ -850,6 +854,8 @@ const char* manufacturer = "unknown";
 const char* product = "unknown";
 
 void platform_init(void) {
+  printf("platform_init:\n");
+
   pc_init_debug();
 
   platform_init_crashlog();
