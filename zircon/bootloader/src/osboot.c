@@ -390,6 +390,10 @@ EFIAPI efi_status efi_main(efi_handle img, efi_system_table* sys) {
     printf("Framebuffer base is at %" PRIx64 "\n\n", gop->Mode->FrameBufferBase);
   }
 
+  // We never see this and don't got to fail,
+  // so "proving efi_main isn't executed in `fx qemu -N`
+  printf("wink efi_main:\n"); goto fail;
+
   // Set aside space for the kernel down at the 1MB mark up front
   // to avoid other allocations getting in the way.
   // The kernel itself is about 1MB, but we leave generous space
